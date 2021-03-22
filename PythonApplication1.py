@@ -2,13 +2,23 @@ from feedparser import parse
 
 from pprint import pprint
 
-from datetime import datetime
-dateTimeObj = str(datetime.now())
 
 def get_fuel(product_id,suburb,when):
     url = 'http://www.fuelwatch.wa.gov.au/fuelwatch/fuelWatchRSS?Product='+str(product_id)+'&Suburb='+str(suburb)+'&Day='+str(when)+''
     data = parse(url)
-    return data['entries']
+    fuel_list = [
+        {
+            'date': details['date'],
+            'address': details['address'],
+            'location': details['location'],
+            'brand': details['brand'],
+            'price': float(details['price']),
+            
+        }
+    for details in data['entries']
+    ]
+    pprint(fuel_list)
+    return fuel_list
 
 # define variables for product_id
 Unleaded_Petrol = 1
@@ -29,7 +39,7 @@ for word in sorted_felicia_combined:
     Fuel_html_list = Fuel_html_list + '<td>' + word['address'] + '</td>'
     Fuel_html_list = Fuel_html_list + '<td>' + word['location'] + '</td>'
     Fuel_html_list = Fuel_html_list + '<td>' + word['brand'] + '</td>'
-    Fuel_html_list = Fuel_html_list + '<td>' + word['price'] + '</td>'
+    Fuel_html_list = Fuel_html_list + '<td>' + str(word['price']) + '</td>'
     Fuel_html_list = Fuel_html_list + '</tr>'
 
 
@@ -44,7 +54,6 @@ Fuel_html = f'''
 
 <h2>Fuel Table</h2>
 
-<p> {dateTimeObj} </p>
 
 <table>
     <tr>
