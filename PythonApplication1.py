@@ -1,12 +1,21 @@
-from feedparser import parse
+import feedparser 
+
+from urllib.parse import urlencode
+
+from itertools import product
 
 from pprint import pprint
 
 
 def get_fuel(product_id,suburb,when):
-    url = 'http://www.fuelwatch.wa.gov.au/fuelwatch/fuelWatchRSS?Product='+str(product_id)+'&Suburb='+str(suburb)+'&Day='+str(when)+''
-    data = parse(url)
-    fuel_list = [
+    params = {
+    'Product': product_id,
+    'Suburb': suburb,
+    'When': when,
+  }
+    data = feedparser.parse('http://www.fuelwatch.wa.gov.au/fuelwatch/fuelWatchRSS?' + urlencode(params))
+    pprint('http://www.fuelwatch.wa.gov.au/fuelwatch/fuelWatchRSS?' + urlencode(params))
+    return [
         {
             'date': details['date'],
             'address': details['address'],
@@ -15,47 +24,18 @@ def get_fuel(product_id,suburb,when):
             'price': float(details['price']),
             
         }
-    for details in data['entries']
-    ]
-    pprint(fuel_list)
-    return fuel_list
+        for details in data['entries']
+   ]
+        
+fuel_list = get_fuel(2,'south perth','Today')
+pprint(fuel_list)
+    
+tr_list = [
+                '<tr><td>{date}</td><td>{address}</td><td>{location}</td><td>{brand}</td><td>{price}</td></tr>'.format(**d)
+                for d in  fuel_list
+]
 
-# define variables for product_id
-Unleaded_Petrol = 1
-Premium_Unleaded = 2
-
-# Calling function
-felicia_today = get_fuel(Premium_Unleaded,'south%20perth','today')
-felicia_tomorrow = get_fuel(Premium_Unleaded,'south%20perth','tomorrow')
-felicia_combined = felicia_today + felicia_tomorrow
-
-def by_price(item):
-    return item['price']
-sorted_felicia_combined = sorted(felicia_combined, key = by_price)
-
-Fuel_html_list = ''
-for word in sorted_felicia_combined:
-    Fuel_html_list = Fuel_html_list + '<td>' + word['date'] + '</td>'
-    Fuel_html_list = Fuel_html_list + '<td>' + word['address'] + '</td>'
-    Fuel_html_list = Fuel_html_list + '<td>' + word['location'] + '</td>'
-    Fuel_html_list = Fuel_html_list + '<td>' + word['brand'] + '</td>'
-    Fuel_html_list = Fuel_html_list + '<td>' + str(word['price']) + '</td>'
-    Fuel_html_list = Fuel_html_list + '</tr>'
-
-
-Fuel_html = f'''
-<html>
-<head>
-<style>
-
-</style>
-</head>
-<body>
-
-<h2>Fuel Table</h2>
-
-
-<table>
+thead = '''
     <tr>
         <th>Date</th>
         <th>Address</th>
@@ -63,17 +43,11 @@ Fuel_html = f'''
         <th>Brand</th>
         <th>Price</th>
     </tr>
-
-<tr>
-    {Fuel_html_list}
-</tr>
-
-</table>
-
-</body>
-</html>
-
 '''
-f = open('render.html','w')
-f.write(Fuel_html)
-f.close()
+
+
+html = '<h2>Fuel Table</h2>' + '<table>' + thead + ''.join(tr_list) + '</table>'
+
+
+with open('table.html', 'w') as f:
+    f.write('<style>table, td{border: 1px solid black}</style>' + html)
